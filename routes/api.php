@@ -1,32 +1,44 @@
 <?php
 
-use Illuminate\Http\Request;
-use App\Http\Controllers\AuthController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Middleware\PharmacistMiddleware;
-use App\Http\Middleware\AdminMiddleware;
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\MedicineController;
+use App\Http\Controllers\PharmacistController;
+use App\Http\Controllers\WareHouseController;
+use Illuminate\Support\Facades\Route;
+
 
 Route::middleware('auth:sanctum')->group(function () {
+
     Route::get('/logout', [AuthController::class, 'logout']);
     Route::get('/getid', [AuthController::class, 'getAuthenticatedUserId']);
-    Route::get('/test', [AuthController::class, 'test'])->middleware('pharmacist');
-    Route::get('/test2', [AuthController::class, 'test2'])->middleware('admin');
+
+    Route::group([
+        'meddleware' => 'pharmacist' ,
+    ] , function(){
+
+    });
+
+    Route::group([
+        'meddleware' => 'admin' ,
+    ] , function(){
+
+    });
 
 });
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::apiResource('company' , CompanyController::class);
+Route::get('company/{company}/medicines' , [CompanyController::class , 'medicinesByCompany']);
+
+Route::apiResource('category' , CategoryController::class);
+Route::get('category/{category}/medicines' , [CategoryController::class , 'medicinesByCategory']);
+
+Route::apiResource('medicine' , MedicineController::class);
+Route::get('medicine/search/{name}' , [MedicineController::class , 'search']) ;
+
+Route::apiResource('warehouse' , WareHouseController::class);
