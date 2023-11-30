@@ -10,6 +10,7 @@ use App\Http\Requests\UpdateMedicineRequest;
 use App\Models\Category;
 use Illuminate\Support\Facades\DB;
 use PDO;
+use Illuminate\Http\Request;
 
 class MedicineController extends Controller
 {
@@ -19,7 +20,7 @@ class MedicineController extends Controller
     }
 
     public function store(StoreMedicineRequest $request)
-    {   
+    {
         $medicine = Medicine::create($request->validated()) ;
 
         return new MedicineResource($medicine) ;
@@ -41,7 +42,7 @@ class MedicineController extends Controller
         if($res->isEmpty()){
             return response()->json([],200) ;
         }
-        
+
         return MedicineResource::collection($res);
     }
     public function update(UpdateMedicineRequest $request, Medicine $medicine)
@@ -70,4 +71,55 @@ class MedicineController extends Controller
              $name = str_replace('_', '\_', $name); //didn't work with sqlite
          }
     }
+
+
+
+
+            public function search2(Request $request)
+        {
+            $subname = $request->query('scientific_name');
+            if( $request->query('commercial_name'))
+            {
+                $subname = $request->query('commercial_name');
+            }
+
+            if (empty($subname)) {
+                return response()->json(['error' => 'Search query is empty']);
+            }
+
+            $medicines = Medicine::all();
+
+            foreach ($medicines as $medicine) {
+                $name = $medicine->commercial_name;
+                $relevanceScore = $this->calculateRelevanceScore($name, $subname);
+                $medicine->relevanceScore = $relevanceScore;
+            }
+
+            $filteredMedicines = $medicines->filter(function ($medicine) {
+                return $medicine->relevanceScore >= 40;
+            });
+
+            $sortedMedicines = $filteredMedicines->sortByDesc('relevanceScore');
+
+            $mostRelevantMedicines = $sortedMedicines->take(4)->pluck('commercial_name');
+
+            return response()->json($mostRelevantMedicines);
+        }
+
+
+        function calculateRelevanceScore($name, $subname)
+        {
+            $name = mb_strtolower($name);
+            $subname = mb_strtolower($subname);
+
+            similar_text($name, $subname, $percentage);
+
+            return $percentage;
+        }
+
+
+
+
+
+
 }

@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Http\Resources\CategoryResource;
+use App\Http\Resources\CompanyResource;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        CompanyResource::withoutWrapping();
+        CategoryResource::withoutWrapping();
     }
 }

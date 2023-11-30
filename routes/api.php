@@ -5,8 +5,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\MedicineController;
-use App\Http\Controllers\PharmacistController;
 use App\Http\Controllers\WareHouseController;
+use App\Http\Controllers\MedicineWarehouseController;
+
 use Illuminate\Support\Facades\Route;
 
 
@@ -29,7 +30,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
 });
 
-Route::post('/register', [AuthController::class, 'register']);
+Route::post('/phregister', [AuthController::class, 'phregister']);
+
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::apiResource('company' , CompanyController::class);
@@ -39,6 +41,9 @@ Route::apiResource('category' , CategoryController::class);
 Route::get('category/{category}/medicines' , [CategoryController::class , 'medicinesByCategory']);
 
 Route::apiResource('medicine' , MedicineController::class);
-Route::get('medicine/search/{name}' , [MedicineController::class , 'search']) ;
+Route::post('/medicine/search' , [MedicineController::class , 'search2']) ; //if get then errore
 
 Route::apiResource('warehouse' , WareHouseController::class);
+
+
+Route::apiResource('medicine_wareHouse' , MedicineWarehouseController::class);

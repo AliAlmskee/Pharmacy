@@ -15,15 +15,15 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $guarded = [] ;
-    protected $with = ['favorites' , 'orders'] ;
+    protected $with = ['orders'] ;
     public function orders():HasMany
     {
         return $this->hasMany(Order::class);
     }
-    public function favorites():HasMany
-    {
-        return $this->hasMany(Medicine::class , 'medicine' , 'midicine_user') ;
-    }
+    // public function favorites():HasMany
+    // {
+    //     return $this->hasMany(Medicine::class , 'medicine' , 'midicine_user') ;
+    // }
 
     public function warehouse():BelongsTo
     {

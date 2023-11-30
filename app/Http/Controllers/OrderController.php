@@ -27,9 +27,9 @@ class OrderController extends Controller
     public function store(StoreOrderRequest $request)
     {
         $request->validated($request->all()) ;
-        
+
         $order = Order::create([
-            'user_id'=> Auth::id(),   
+            'user_id'=> Auth::id(),
             'name'=> $request->name,
             'status'=> $request->status,
             'total_price'=> $request->total_price,
@@ -50,16 +50,63 @@ class OrderController extends Controller
     }
 
     public function update(UpdateOrderRequest $request, Order $order)
-    {   
+    {
         $order->update($request->all()) ;
 
         return new OrderResource($order);
     }
 
+
+//   لما صيدلاني يحذف الطلب
     public function destroy(Order $order)
     {
         $order->delete() ;
 
         return response(null , 204) ;
+    }
+
+    //   لما ادمن يحذف الطلب
+
+    //to do
+    //public function delete Order
+
+
+
+    public function status2on_the_way(Order $order)
+    {
+        $order->status = 'on_its_way';
+        $order->save();
+        return response()->json(" order 2 on_its_way .done!",200) ;
+
+    }
+    public function status2completed(Order $order)
+    {
+        $order->status = 'completed';
+        $order->save();
+        return response()->json(" order 2 completed .done!",200) ;
+
+    }
+
+
+    public function take_order(Order $order)
+    {
+        if($order->status !='pending'){
+        return response()->json('alrady taken ')     ;
+         }
+        $order->status = 'in_progress';
+        $order->warehouse_id = Auth::user()->warehouse_id;
+
+        $total =0 ;
+        $medicines = $order->medicines() ;
+        foreach($medicines as $medicure){
+            $total += $medicure->price;
+
+        }
+        $order->total = $total ;
+        $order->save();
+
+
+
+
     }
 }

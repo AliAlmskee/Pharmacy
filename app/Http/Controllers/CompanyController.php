@@ -20,19 +20,19 @@ class CompanyController extends Controller
     //CRUD
     public function index()
     {
-        return CompanyResource::collection(Company::paginate());
+        return CompanyResource::collection(Company::paginate()->items());
     }
 
     public function store(StoreCompanyRequest $request)
     {
         $company = Company::create($request->validated());
 
-        return new CompanyResource($company); 
+        return new CompanyResource($company);
     }
 
     public function show(Company $company)
     {
-        return new CompanyResource($company); 
+        return new CompanyResource($company);
     }
 
     public function update(UpdateCompanyRequest $request, Company $company)
@@ -41,7 +41,7 @@ class CompanyController extends Controller
 
         return new CompanyResource($company) ;
     }
-    
+
     public function destroy(Company $company)
     {
         $company->delete();
