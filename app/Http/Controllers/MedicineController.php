@@ -86,9 +86,14 @@ class MedicineController extends Controller
             if (empty($subname)) {
                 return response()->json(['error' => 'Search query is empty']);
             }
+            if( $request->query('category_id'))
+            {
+                $medicines =  Medicine::where('category_id' , $request->query('category_id'));
 
+            }
+            else{
             $medicines = Medicine::all();
-
+                }
             foreach ($medicines as $medicine) {
                 $name = $medicine->commercial_name;
                 $relevanceScore = $this->calculateRelevanceScore($name, $subname);
@@ -96,13 +101,19 @@ class MedicineController extends Controller
             }
 
             $filteredMedicines = $medicines->filter(function ($medicine) {
-                return $medicine->relevanceScore >= 40;
+                return $medicine->relevanceScore >= 20;
             });
 
             $sortedMedicines = $filteredMedicines->sortByDesc('relevanceScore');
+            if($request->query('scientific_name'))
+            {
+                $mostRelevantMedicines = $sortedMedicines->take(4)->pluck('scientific_name');
 
+
+            }
+            else{
             $mostRelevantMedicines = $sortedMedicines->take(4)->pluck('commercial_name');
-
+}
             return response()->json($mostRelevantMedicines);
         }
 

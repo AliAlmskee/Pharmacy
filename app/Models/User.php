@@ -20,10 +20,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(Order::class);
     }
-    // public function favorites():HasMany
-    // {
-    //     return $this->hasMany(Medicine::class , 'medicine' , 'midicine_user') ;
-    // }
+    public function favoriteMedicines()
+    {
+        return $this->belongsToMany(Medicine::class, 'favorites');
+    }
+
 
     public function warehouse():BelongsTo
     {

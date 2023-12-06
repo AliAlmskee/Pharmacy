@@ -9,6 +9,8 @@ use App\Http\Requests\UpdateOrderRequest;
 use App\Http\Resources\OrderResource;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\HttpResponses;
+use Illuminate\Http\Request;
+use App\Models\Warehouse;
 
 class OrderController extends Controller
 {
@@ -26,19 +28,19 @@ class OrderController extends Controller
 
     public function store(StoreOrderRequest $request)
     {
+
         $request->validated($request->all()) ;
 
         $order = Order::create([
             'user_id'=> Auth::id(),
-            'name'=> $request->name,
-            'status'=> $request->status,
+            'status'=> 'pending',
             'total_price'=> $request->total_price,
             'date'=> $request->date,
-            'paid'=> $request->paid,
+            'paid'=>false,
         ]);
 
         foreach($request->medicines as $med){
-            $order->medicines()->attach($med['id'] , ['amount' => $med['amount']]) ;
+            $order->medicines()->attach($med['id'] , ['medicine_amount' => $med['medicine_amount']]) ;
         }
 
         return new OrderResource($order);
@@ -60,16 +62,80 @@ class OrderController extends Controller
 //   لما صيدلاني يحذف الطلب
     public function destroy(Order $order)
     {
+        if($order->status=='pending'){
         $order->delete() ;
 
-        return response(null , 204) ;
+        return response(null , 204) ;}
+        return response()->json(" the order alradu in progress ");
     }
 
     //   لما ادمن يحذف الطلب
-
     //to do
     //public function delete Order
 
+
+    public function my_orders()
+    {
+        $orders = Order::where("user_id", Auth::id() )->where('status','in_progress')->get();
+        return $orders ;
+
+
+    }
+
+    public function take_order(Request $request)
+    {
+        $order = Order::findOrFail($request->input('order_id'));
+        $order->user_id = Auth::id();
+        $order->warehouse_id = Auth::user()->warehouse_id;
+        $order->status = 'in_progress';
+        $order->save();
+
+
+        $pivotData = $order->medicines()->get()->map(function ($medicine) {
+            return $medicine->pivot;
+        });
+
+        $warehouseId = Auth::user()->warehouse_id;
+        $response = [];
+        foreach ($pivotData as $pivot) {
+            $medicines = Warehouse::find($warehouseId)->medicines()
+                ->where('medicine_id', $pivot['medicine_id'])
+                ->orderBy('final_date', 'asc')
+                ->withPivot('amount', 'final_date')
+                ->get();
+                $tolta_amount =0 ;
+                $required_amount =  $pivot['medicine_amount'];
+                foreach ($medicines as $medicine)
+                {
+                    $tolta_amount += $medicine->pivot->amount;
+                }
+                if ( $tolta_amount >= $required_amount) {
+                         while($required_amount > 0)
+                         {
+
+
+                         }
+
+
+
+                }
+                else
+                {
+
+                    return response()->json(['message' => 'not enogh']);
+
+
+
+                }
+               $medicine->pivot->save();
+                $response[] = [
+                    'pivot' =>  $medicine->pivot
+                ];
+
+        }
+
+        return response()->json($response);
+    }
 
 
     public function status2on_the_way(Order $order)
@@ -88,25 +154,5 @@ class OrderController extends Controller
     }
 
 
-    public function take_order(Order $order)
-    {
-        if($order->status !='pending'){
-        return response()->json('alrady taken ')     ;
-         }
-        $order->status = 'in_progress';
-        $order->warehouse_id = Auth::user()->warehouse_id;
 
-        $total =0 ;
-        $medicines = $order->medicines() ;
-        foreach($medicines as $medicure){
-            $total += $medicure->price;
-
-        }
-        $order->total = $total ;
-        $order->save();
-
-
-
-
-    }
 }

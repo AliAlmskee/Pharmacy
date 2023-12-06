@@ -15,10 +15,11 @@ class Order extends Model
 
     protected $with = ['medicines'];
 
-    public function medicines():HasMany
+    public function medicines()
     {
-        return $this->hasMany(Medicine::class);
+        return $this->belongsToMany(Medicine::class, 'medicine_orders')->withPivot('medicine_amount')->withTimestamps();
     }
+
 
     public function pharmacist():BelongsTo
     {

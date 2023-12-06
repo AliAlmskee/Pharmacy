@@ -21,7 +21,7 @@ class Warehouse extends Model
     public function medicines():BelongsToMany
     {
         return $this->belongsToMany(Medicine::class)
-        ->withPivot(['final_date' , 'amount'])
+        ->withPivot(['id','final_date' , 'amount'])
         ->withTimestamps()
         ->orderByPivot('final_date');
     }

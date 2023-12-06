@@ -25,7 +25,6 @@ class StoreMedicineRequest extends FormRequest
         return [
             'scientific_name' => ['required' , 'max:255'  , 'string'] ,
             'commercial_name' => ['required' , 'max:255' , 'string'] ,
-            'max_amount' => ['required' , 'integer'] ,
             'price' => ['required' ,  'integer'] ,
 
             'company_id' => [
@@ -37,7 +36,7 @@ class StoreMedicineRequest extends FormRequest
                                  ->where('medicines.scientific_name', $this->commercial_name);
                 }),
             ],
-            'category_id' => ['required' , 'exists:categories,id'] 
+            'category_id' => ['required' , 'exists:categories,id']
         ];
     }
 }

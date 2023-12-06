@@ -7,16 +7,14 @@ use App\Models\Medicine;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class MedicineWarehouseController extends Controller
 {
-    public function all()//for super admin
-    {
 
-    }
-    public function index(Request $request)
+    public function index()
     {
-        $warehouseId = $request->input('warehouse_id');
+        $warehouseId = Auth::user()->warehouse_id;
 
         $warehouse = Warehouse::find($warehouseId);
 
@@ -28,39 +26,63 @@ class MedicineWarehouseController extends Controller
         return response()->json($warehouse );
 
     }
-    public function medicine(Medicine $medicine)//for all warehouses
+
+    public function store(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'medicine_id' => 'required|exists:medicines,id',
+            'amount' => 'required|integer|min:1',
+            'final_date' => 'required|date',
+        ]);
 
-    }
-
-    public function warehouse(Warehouse $warehouse , Medicine $medicine)
-    {
-
-    }
-        public function store(Request $request)//admin store the medicine amount in his warehouse
-        {
-            // $warehouseId = Auth::user()->warehouse_id;
-            $warehouseId = 1;
-            $medicineId = $request->input('medicine_id');
-            $amount = $request->input('amount');
-            $finalDate = $request->input('final_date');
-
-            $medicine = Medicine::find($medicineId);
-            $warehouse = Warehouse::find($warehouseId);
-
-            if(!$medicine or !$warehouse){
-                return response()->json([
-                    'error' => ' one or two not found  ' ,
-                ] , 400) ;
-            }
-
-            $warehouse->medicines()->attach($medicineId, [
-                'amount' => $amount,
-                'final_date' => $finalDate,
-            ]);
-
-            return response()->json('Data stored successfully.');
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 400);
         }
+
+        $warehouseId = Auth::user()->warehouse_id;
+        $medicineId = $request->input('medicine_id');
+        $amount = $request->input('amount');
+        $finalDate = $request->input('final_date');
+
+        $medicine = Medicine::find($medicineId);
+        $warehouse = Warehouse::find($warehouseId);
+
+        if (!$medicine || !$warehouse) {
+            return response()->json(['error' => 'One or both resources not found.'], 404);
+        }
+
+        $record = $warehouse->medicines()->where('medicine_id', $medicineId)
+        ->wherePivot('final_date', $finalDate)
+        ->first();
+
+    if ($record) {
+        $pivotId = $record->pivot->id;
+        $pivot = $warehouse->medicines()->newPivotStatement()->where('id', $pivotId)->first();
+        $previos_amount = $pivot->amount ;
+        if ($pivot) {
+            $warehouse->medicines()
+                ->newPivotStatement()
+                ->where('id', $pivotId)
+                ->update(['amount' =>  $previos_amount + $amount]);
+
+            return response()->json(['message' => 'Amount updated successfully']);
+        }
+
+    }
+
+
+
+
+
+        $warehouse->medicines()->attach($medicineId, [
+            'amount' => $amount,
+            'final_date' => $finalDate,
+        ]);
+
+        return response()->json('Data stored successfully.');
+    }
+
+
     public function destroy(Medicine $medicine)
     {
 
@@ -71,7 +93,7 @@ class MedicineWarehouseController extends Controller
     public function getAmount(Request $request)
     {
         $medicineId = $request->query('medicine_id');
-        $warehouseId = $request->query('warehouse_id');
+        $warehouseId = Auth::user()->warehouse_id;
 
         $warehouse = Warehouse::find($warehouseId);
         $medicines = $warehouse->medicines->where('id', $medicineId);
@@ -84,40 +106,6 @@ class MedicineWarehouseController extends Controller
         return response()->json($total);
     }
 
-
-    //need testing
-    public function moveMedicine(Request $request)
-    {
-        $medicineId = $request->medicine_id;
-        $warehouseId = $request->warehouse_id;
-        $amount = $request->amount;
-
-        $admin = Auth::user();
-        $sourceWarehouse = Warehouse::find($warehouseId);
-        $destinationWarehouse = Warehouse::find($admin->$warehouseId);
-
-        $medicinesInSource = $sourceWarehouse->medicines()->where('medicine_id', $medicineId)->withPivot('amount', 'final_date')->get();
-        $closest = $medicinesInSource->first();
-
-        foreach ($medicinesInSource as $medicine) {
-            if ($medicine->pivot->final_date < $closest->pivot->final_date) {
-                $closest = $medicine;
-            }
-        }
-
-        $closest->pivot->amount -= $amount;
-        $closest->pivot->save();
-
-        $medicineInDestination = $destinationWarehouse->medicines()->where('medicine_id', $medicineId)->first();
-
-        if ($medicineInDestination) {
-            $medicineInDestination->pivot->amount += $amount;
-            $medicineInDestination->pivot->save();
-        } else {
-            $destinationWarehouse->medicines()->attach($medicineId, ['amount' => $amount, 'final_date' => $closest->pivot->final_date]);
-        }
-
-    }
 
 
     }

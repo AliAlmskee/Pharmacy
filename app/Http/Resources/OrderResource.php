@@ -18,18 +18,15 @@ class OrderResource extends JsonResource
         return [
             "id"=> (string)$this->id,
             "attributes" => [
-                'name' => $this->name,  
-                'status' => $this->status,    
+                'pharmacist_id'=>$this->user_id,
+                'status' => $this->status,
                 'date'=> $this->date,
                 'paid' => $this->paid,
                 'total_price' => $this->total_price,
-                'created_at' => $this->created_at,
-                'updated_at'=> $this->updated_at,
             ],
-            "relationships" => [
-                'pharmacist' => $this->pharmacist,
-                'medicines' => MedicineResource::collection($this->medicines)
-            ]
+            'medicines' => $this->medicines->map(function ($medicine) {
+                return $medicine->pivot;
+            })
         ];
     }
 }

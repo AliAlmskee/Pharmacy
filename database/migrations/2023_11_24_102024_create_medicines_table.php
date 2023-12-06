@@ -15,8 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('scientific_name');
             $table->string('commercial_name');
-            $table->integer('max_amount');
-            $table->integer('total_amount')->nullable();
             $table->integer('price');
             $table->foreignId('category_id')->constrained();
             $table->foreignId('company_id')->constrained();

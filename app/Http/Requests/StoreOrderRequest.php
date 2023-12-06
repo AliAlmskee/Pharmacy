@@ -22,13 +22,10 @@ class StoreOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required' , 'in:pending,on_its_way,completed' , 'string'] ,
             'date' => ['required' , 'date'] ,
-            'paid' => ['required' , 'boolean'] ,
             'total_price' => ['required' , 'integer'],
-            
-            'medicines.*.id' => ['required' , 'exist:medicines,id'],
-            'medicines.*.total_amount' => ['required' , 'exist:medicines,total_amount'],
+            'medicines.*.id' => ['required' , 'exists:medicines,id'],
+            'medicines.*.medicine_amount' => ['required' ],
         ];
     }
 }

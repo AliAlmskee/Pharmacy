@@ -18,12 +18,11 @@ class MedicineResource extends JsonResource
             'id' =>(string)$this->id,
             'scientific_name' => $this->scientific_name ,
             'commercial_name' => $this->commercial_name ,
-            'max_amount' => $this->max_amount ,
-            'total_amount' => $this->total_amount ,
             'price' => $this->price ,
-            
-            'category' => new CategoryResource($this->category) , 
-            'company' => new CompanyResource($this->company) ,
+
+            // 'category' => new CategoryResource($this->category) ,
+            // 'company' => new CompanyResource($this->company) ,
+
 
         ];
     }

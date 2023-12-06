@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->enum('role', ['Pharmacist', 'Admin']);
-              $table->string('phone')->unique();
+            $table->string('phone')->unique();
             $table->string('password');
             $table->foreignId('warehouse_id')->nullable()->constrained();
             $table->string('location')->nullable();

@@ -28,15 +28,22 @@ class Medicine extends Model
     public function warehouses():BelongsToMany
     {
         return $this->belongsToMany(Warehouse::class)
-        ->withPivot(['final_date' , 'amount'])
+        ->withPivot(['id','final_date' , 'amount'])
         ->withTimestamps();
     }
 
-    public function orders():BelongsToMany
+    public function orders()
     {
-        return $this->belongsToMany(Company::class)
-        ->withTimestamps();
+        return $this->belongsToMany(Order::class, 'medicine_orders')->withPivot('medicine_amount')->withTimestamps();
     }
+
+
+
+
+    public function favoritedByUsers()
+{
+    return $this->belongsToMany(User::class, 'favorites')->withTimestamps();
+}
 
     // public function pharmacist():BelongsToMany
     // {

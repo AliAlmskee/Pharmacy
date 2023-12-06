@@ -18,7 +18,7 @@ return new class extends Migration
             $table->date('date');
             $table->boolean('paid');
             $table->integer('total_price');
-            $table->foreignId('warehouse_id')->constrained()->nullable();
+            $table->foreignId('warehouse_id')->nullable()->constrained();
             $table->timestamps();
         });
     }

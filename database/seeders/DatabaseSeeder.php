@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
@@ -12,13 +13,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        \App\Models\User::factory(1)->create();
-
-        \App\Models\User::factory()->create([
-            'name' => 'Test User',
-            'password' => '1234567890',
-            'role' => 'Admin',
-            'warehouse_id' => 1 ,
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        $tables = DB::select('SHOW TABLES');
+        foreach ($tables as $table) {
+            $tableName = reset($table);
+            DB::table($tableName)->truncate();
+        }
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        $this->call([
+            CompanyTableSeeder::class,
+            WarehouseTableSeeder::class,
+            CategoriesTableSeeder::class,
+            MedicineTableSeeder::class,
+            UsersTableSeeder::class,
         ]);
     }
 }

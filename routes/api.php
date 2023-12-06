@@ -9,28 +9,38 @@ use App\Http\Controllers\WareHouseController;
 use App\Http\Controllers\MedicineWarehouseController;
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\FavoritController;
 
 
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/logout', [AuthController::class, 'logout']);
     Route::get('/getid', [AuthController::class, 'getAuthenticatedUserId']);
+    Route::apiResource('order' , OrderController::class);
+    Route::get('/search2', [MedicineController::class, 'search2']);
 
     Route::group([
-        'meddleware' => 'pharmacist' ,
+        'middleware' => 'pharmacist' ,
     ] , function(){
+
+        Route::apiResource('favorit' , FavoritController::class);
 
     });
+        Route::post('/take_order', [OrderController::class, 'take_order']);
 
     Route::group([
-        'meddleware' => 'admin' ,
+        'middleware' => 'admin' ,
     ] , function(){
+
+        Route::post('/phregister', [AuthController::class, 'phregister']);
+        Route::apiResource('medicine_wareHouse' , MedicineWarehouseController::class);
+        Route::get('/getAmount', [MedicineWarehouseController::class, 'getAmount']);
+
 
     });
 
 });
-
-Route::post('/phregister', [AuthController::class, 'phregister']);
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -46,4 +56,3 @@ Route::post('/medicine/search' , [MedicineController::class , 'search2']) ; //if
 Route::apiResource('warehouse' , WareHouseController::class);
 
 
-Route::apiResource('medicine_wareHouse' , MedicineWarehouseController::class);
