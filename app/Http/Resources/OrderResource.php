@@ -23,10 +23,12 @@ class OrderResource extends JsonResource
                 'date'=> $this->date,
                 'paid' => $this->paid,
                 'total_price' => $this->total_price,
+                'warehouse_id' =>$this->warehouse_id,
             ],
             'medicines' => $this->medicines->map(function ($medicine) {
                 return $medicine->pivot;
             })
+
         ];
     }
 }

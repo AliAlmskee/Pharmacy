@@ -39,6 +39,7 @@ class MedicineWarehouseController extends Controller
             return response()->json(['error' => $validator->errors()], 400);
         }
 
+
         $warehouseId = Auth::user()->warehouse_id;
         $medicineId = $request->input('medicine_id');
         $amount = $request->input('amount');
@@ -67,19 +68,14 @@ class MedicineWarehouseController extends Controller
 
             return response()->json(['message' => 'Amount updated successfully']);
         }
-
+        return response()->json(['message' => 'Something went wrong']);
     }
-
-
-
-
-
         $warehouse->medicines()->attach($medicineId, [
             'amount' => $amount,
             'final_date' => $finalDate,
         ]);
 
-        return response()->json('Data stored successfully.');
+        return response()->json(['message' => 'Data stored successfully.']);
     }
 
 

@@ -16,7 +16,7 @@ class MedicineController extends Controller
 {
     public function index()
     {
-        return MedicineResource::collection(Medicine::paginate());
+        return MedicineResource::collection(Medicine::paginate()->items());
     }
 
     public function store(StoreMedicineRequest $request)
@@ -78,45 +78,42 @@ class MedicineController extends Controller
             public function search2(Request $request)
         {
             $subname = $request->query('scientific_name');
-            if( $request->query('commercial_name'))
+            if( !empty($request->query('commercial_name')))
             {
-                $subname = $request->query('commercial_name');
+            $subname = $request->query('commercial_name');
             }
-
             if (empty($subname)) {
                 return response()->json(['error' => 'Search query is empty']);
             }
-            if( $request->query('category_id'))
-            {
-                $medicines =  Medicine::where('category_id' , $request->query('category_id'));
 
+            $medicinesQuery = Medicine::query();
+
+            if ($request->query('category_id')) {
+                $medicinesQuery->where('category_id', $request->query('category_id'));
             }
-            else{
-            $medicines = Medicine::all();
-                }
+
+            $medicines = $medicinesQuery->get();
+
             foreach ($medicines as $medicine) {
                 $name = $medicine->commercial_name;
                 $relevanceScore = $this->calculateRelevanceScore($name, $subname);
                 $medicine->relevanceScore = $relevanceScore;
-            }
-
-            $filteredMedicines = $medicines->filter(function ($medicine) {
-                return $medicine->relevanceScore >= 20;
-            });
-
-            $sortedMedicines = $filteredMedicines->sortByDesc('relevanceScore');
-            if($request->query('scientific_name'))
-            {
-                $mostRelevantMedicines = $sortedMedicines->take(4)->pluck('scientific_name');
-
 
             }
-            else{
-            $mostRelevantMedicines = $sortedMedicines->take(4)->pluck('commercial_name');
-}
-            return response()->json($mostRelevantMedicines);
+
+            foreach ($medicines as $key => $medicine) {
+                if ($medicine->relevanceScore < 20) {
+                    $medicines->forget($key);
+                }
+            }
+
+            $sortedMedicines = $medicines->sortByDesc('relevanceScore');
+            // $mostRelevantMedicines = $request->query('scientific_name') ?
+            //     $sortedMedicines->take(4)->pluck('scientific_name') :
+            //     $sortedMedicines->take(4)->pluck('commercial_name');
+
+            return response()->json($sortedMedicines);
         }
-
 
         function calculateRelevanceScore($name, $subname)
         {
@@ -127,8 +124,6 @@ class MedicineController extends Controller
 
             return $percentage;
         }
-
-
 
 
 

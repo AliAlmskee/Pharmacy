@@ -15,19 +15,19 @@ class WareHouseController extends Controller
     //CRUD
     public function index()
     {
-        return WareHouseResource::collection(WareHouse::paginate());
+        return WareHouseResource::collection(WareHouse::paginate()->items());
     }
 
     public function store(StoreWareHouseRequest $request)
     {
         $warehouse = WareHouse::create($request->validated());
 
-        return new WareHouseResource($warehouse); 
+        return new WareHouseResource($warehouse);
     }
 
     public function show(WareHouse $warehouse)
     {
-        return new WareHouseResource($warehouse); 
+        return new WareHouseResource($warehouse);
     }
 
     public function update(UpdateWareHouseRequest $request, WareHouse $warehouse)
@@ -36,7 +36,7 @@ class WareHouseController extends Controller
 
         return new WareHouseResource($warehouse) ;
     }
-    
+
     public function destroy(WareHouse $warehouse)
     {
         $warehouse->delete();

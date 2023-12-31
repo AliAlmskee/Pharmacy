@@ -16,10 +16,15 @@ class OrderController extends Controller
 {
     use HttpResponses;
 
-    public function all(){
-        return OrderResource::collection(Order::paginate());
+    public function index(){
+        if(Auth::user()->role =='Admin'){
+        return OrderResource::collection(Order::where('warehouse_id',Auth::user()->warehouse_id)->latest()->paginate()->items());
     }
-    public function index()
+    return OrderResource::collection(Order::where('user_id',Auth::id())->latest()->paginate()->items());
+    }
+
+
+    public function all()
     {
         return OrderResource::collection(
             Order::where('user_id' , Auth::id())->latest()
@@ -65,8 +70,9 @@ class OrderController extends Controller
         if($order->status=='pending'){
         $order->delete() ;
 
-        return response(null , 204) ;}
-        return response()->json(" the order alradu in progress ");
+        return response()->json(" the order deleted succesfully ");
+    }
+        return response()->json(" the order alrady in progress ");
     }
 
     //   لما ادمن يحذف الطلب
@@ -74,67 +80,63 @@ class OrderController extends Controller
     //public function delete Order
 
 
-    public function my_orders()
-    {
-        $orders = Order::where("user_id", Auth::id() )->where('status','in_progress')->get();
-        return $orders ;
-
-
-    }
-
     public function take_order(Request $request)
     {
+
         $order = Order::findOrFail($request->input('order_id'));
+        if($order->status!='pending')
+        {
+            return response()->json('order had alrady been taken');
+        }
         $order->user_id = Auth::id();
         $order->warehouse_id = Auth::user()->warehouse_id;
         $order->status = 'in_progress';
         $order->save();
-
 
         $pivotData = $order->medicines()->get()->map(function ($medicine) {
             return $medicine->pivot;
         });
 
         $warehouseId = Auth::user()->warehouse_id;
-        $response = [];
+        $returns = [];
+
         foreach ($pivotData as $pivot) {
             $medicines = Warehouse::find($warehouseId)->medicines()
                 ->where('medicine_id', $pivot['medicine_id'])
                 ->orderBy('final_date', 'asc')
                 ->withPivot('amount', 'final_date')
                 ->get();
-                $tolta_amount =0 ;
-                $required_amount =  $pivot['medicine_amount'];
-                foreach ($medicines as $medicine)
-                {
-                    $tolta_amount += $medicine->pivot->amount;
-                }
-                if ( $tolta_amount >= $required_amount) {
-                         while($required_amount > 0)
-                         {
 
-
-                         }
+            $totalAmount = 0;
+            $requiredAmount = $pivot['medicine_amount'];
 
 
 
-                }
-                else
-                {
+            foreach ($medicines as $medicine) {
+                $totalAmount += $medicine->pivot->amount;
+            }
 
-                    return response()->json(['message' => 'not enogh']);
+            $medicinePointer = $medicines->first();
+            $key = 1 ;
+            if ($totalAmount >= $requiredAmount) {
+                while ($requiredAmount > 0) {
+                    $a = min($medicinePointer->pivot->amount, $requiredAmount);
+                      $medicinePointer->pivot->amount -= $a;
+                     $medicinePointer->pivot->save();
+                    $requiredAmount -= $a;
 
+                    if($a!=0){
+                      $returns[] = ['amount' => $a, 'medicine_name' => $medicinePointer->scientific_name, 'final_date' => $medicinePointer->pivot->final_date];
+                    }
+                      $medicinePointer = $medicines->get($key);
+                      $key = $key + 1 ;
 
-
-                }
-               $medicine->pivot->save();
-                $response[] = [
-                    'pivot' =>  $medicine->pivot
-                ];
-
+            }} else {
+                return response()->json(['message' => 'Not enough quantity available for medicine with name ' .  $medicinePointer->scientific_name]);
+            }
         }
 
-        return response()->json($response);
+        return response()->json($returns);
     }
 
 
@@ -153,6 +155,13 @@ class OrderController extends Controller
 
     }
 
+
+    public function getPendingOrder()
+    {
+      $orders =  Order::where('status','pending')->paginate()->items();
+       return response()->json($orders,200) ;
+
+    }
 
 
 }
