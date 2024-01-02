@@ -27,19 +27,19 @@ class StatisticsController extends Controller
             ->when($request->dateTo , function($query) use ($request){
                 $query->where('date' , '<=', $request->dateTo);
             })
-            ->when($request->status , function($query) use ($request){
-                $query->where('status' , $request->status);
-            })
+            // ->when($request->status , function($query) use ($request){
+            //     $query->where('status' , $request->status);
+            // })
             ->join('warehouses' , 'orders.warehouse_id' , '=' , 'warehouses.id')
             ->get();
 
         $warehousesMap = [] ;
         foreach($orders as $o){
             if(!isset($warehousesMap[$o->id])){
-                $warehousesMap[$o->warehouse_id] = 
+                $warehousesMap[$o->warehouse_id] =
                 [
                     'data' => [
-                        'warehouse_id' => $o->warehouse_id , 
+                        'warehouse_id' => $o->warehouse_id ,
                         'name' => $o->name
                         ] ,
                     'sales'=>0
@@ -48,7 +48,7 @@ class StatisticsController extends Controller
             $warehousesMap[$o->warehouse_id]['sales'] += $o->total_price;
         }
 
-        //sort and return 
+        //sort and return
         return $this->SortBySales($warehousesMap);
     }
 
@@ -87,18 +87,18 @@ class StatisticsController extends Controller
             }
             $ordersPaidMap[$po->id] = $po->paid ;
         }
-        //make the map 
+        //make the map
         $medicinesMap = [] ;
         foreach($medicines as $m){
                 $medicinesMap[$m->id] = ['data' => $m , 'sales'=>0];
         }
-        
+
         foreach($medicines_orders as $mo){
             if(isset($ordersPaidMap[$mo->order_id]))
                $medicinesMap[$mo->medicine_id]['sales'] += $mo->medicine_amount * $medicinesMap[$mo->medicine_id]['data']->price ;
         };
 
-        //sort and return 
+        //sort and return
         return $this->SortBySales($medicinesMap);
     }
 

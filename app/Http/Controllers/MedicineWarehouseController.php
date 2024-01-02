@@ -8,9 +8,15 @@ use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Resources\WareHouseResource;
 
 class MedicineWarehouseController extends Controller
 {
+
+
+
+
+
 
     public function index()
     {
@@ -23,8 +29,9 @@ class MedicineWarehouseController extends Controller
         return response()->json($medicines);
 
         }
-        return response()->json($warehouse );
-
+        return WareHouseResource::collection(
+            $warehouse
+        );
     }
 
     public function store(Request $request)

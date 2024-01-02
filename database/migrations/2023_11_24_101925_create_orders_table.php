@@ -18,6 +18,8 @@ return new class extends Migration
             $table->date('date');
             $table->boolean('paid');
             $table->integer('total_price');
+            $table->json('admins_read')->nullable(); // for notification
+            $table->json('amount_medicin')->nullable(); // for delete and update
             $table->foreignId('warehouse_id')->nullable()->constrained();
             $table->timestamps();
         });

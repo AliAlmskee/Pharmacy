@@ -17,7 +17,7 @@ class WareHouseResource extends JsonResource
         return [
             'id' => $this->id ,
             'name' => $this->name ,
-            'admins' => AdminResource::collection($this->admins) ,
+            'medicines' => $this->medicines,
         ];
     }
 }

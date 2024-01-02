@@ -16,19 +16,21 @@ class OrderResource extends JsonResource
     {
 
         return [
-            "id"=> (string)$this->id,
+            "id" => (string)$this->id,
             "attributes" => [
-                'pharmacist_id'=>$this->user_id,
+                'pharmacist_id' => $this->user_id,
                 'status' => $this->status,
-                'date'=> $this->date,
+                'date' => $this->date,
                 'paid' => $this->paid,
                 'total_price' => $this->total_price,
-                'warehouse_id' =>$this->warehouse_id,
+                'warehouse_id' => $this->warehouse_id,
             ],
             'medicines' => $this->medicines->map(function ($medicine) {
-                return $medicine->pivot;
+                return [
+                    'pivot' => $medicine->pivot,
+                    'commercial_name' => $medicine->commercial_name
+                ];
             })
-
         ];
     }
 }

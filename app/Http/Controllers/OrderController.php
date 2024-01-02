@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Traits\HttpResponses;
 use Illuminate\Http\Request;
 use App\Models\Warehouse;
+use App\Models\Medicine;
 
 class OrderController extends Controller
 {
@@ -46,6 +47,9 @@ class OrderController extends Controller
 
         foreach($request->medicines as $med){
             $order->medicines()->attach($med['id'] , ['medicine_amount' => $med['medicine_amount']]) ;
+
+
+
         }
 
         return new OrderResource($order);
@@ -69,7 +73,6 @@ class OrderController extends Controller
     {
         if($order->status=='pending'){
         $order->delete() ;
-
         return response()->json(" the order deleted succesfully ");
     }
         return response()->json(" the order alrady in progress ");
@@ -77,8 +80,40 @@ class OrderController extends Controller
 
     //   لما ادمن يحذف الطلب
     //to do
-    //public function delete Order
+    public function admin_delete_Order($id)
+    {
+        $warehouse_id = Auth::user()->warehouse_id;
+        $order = Order::find($id);
 
+        if (!$order|| $order->warehouse_id != $warehouse_id ) {
+            return response()->json("Order not for you.");
+        }
+        $order->medicines()->detach();
+
+        $amountMedicin = $order->amount_medicin;
+        $amountMedicin = json_decode($amountMedicin, false);
+        $warehouse = Warehouse::find($warehouse_id);
+
+        foreach ($amountMedicin as $data) {
+            $medicine = Medicine::where('commercial_name', $data->medicine_name)->first();
+
+            if ($medicine) {
+                $medicine_id = $medicine->id;
+                $medicin_warehouse = $warehouse->medicines()->where('medicine_id', $medicine_id)
+                    ->where('warehouse_id', $warehouse_id)
+                    ->wherePivot('final_date', $data->final_date)
+                    ->first();
+
+                if ($medicin_warehouse) {
+                    $medicin_warehouse->pivot->amount += $data->amount;
+                    $medicin_warehouse->pivot->save();
+                }
+            }
+        }
+        $order->delete();
+
+        return response()->json("Order deleted successfully.");
+    }
 
     public function take_order(Request $request)
     {
@@ -126,7 +161,7 @@ class OrderController extends Controller
                     $requiredAmount -= $a;
 
                     if($a!=0){
-                      $returns[] = ['amount' => $a, 'medicine_name' => $medicinePointer->scientific_name, 'final_date' => $medicinePointer->pivot->final_date];
+                      $returns[] = ['amount' => $a, 'medicine_name' => $medicinePointer->commercial_name, 'final_date' => $medicinePointer->pivot->final_date];
                     }
                       $medicinePointer = $medicines->get($key);
                       $key = $key + 1 ;
@@ -135,32 +170,91 @@ class OrderController extends Controller
                 return response()->json(['message' => 'Not enough quantity available for medicine with name ' .  $medicinePointer->scientific_name]);
             }
         }
-
+        $order->amount_medicin = $returns ;
+        $order->save();
         return response()->json($returns);
     }
 
 
-    public function status2on_the_way(Order $order)
+    public function status2on_the_way($id)
     {
+        $order = Order::find($id);
+        $warehouse_id = Auth::user()->warehouse_id;
+        if (!$order|| $order->warehouse_id != $warehouse_id ) {
+            return response()->json("Order not for you.");
+        }
+
         $order->status = 'on_its_way';
         $order->save();
         return response()->json(" order 2 on_its_way .done!",200) ;
-
     }
-    public function status2completed(Order $order)
+    public function status2completed($id)
     {
+        $order = Order::find($id);
+
+        $warehouse_id = Auth::user()->warehouse_id;
+        if (!$order|| $order->warehouse_id != $warehouse_id ) {
+            return response()->json("Order not for you.");
+        }
         $order->status = 'completed';
         $order->save();
         return response()->json(" order 2 completed .done!",200) ;
 
     }
 
+    public function to_paid($id)
+    {
+        $order = Order::find($id);
+
+        $warehouse_id = Auth::user()->warehouse_id;
+        if (!$order|| $order->warehouse_id != $warehouse_id ) {
+            return response()->json("Order not for you.");
+        }
+        $order->paid = 1;
+        $order->save();
+        return response()->json(" order is paid .done!",200) ;
+
+    }
 
     public function getPendingOrder()
     {
-      $orders =  Order::where('status','pending')->paginate()->items();
-       return response()->json($orders,200) ;
+       return OrderResource::collection(
+        Order::where('status','pending')->paginate()->items()
+    );
+    }
 
+    public function number_unread()
+    {
+        $num = 0;
+        $orders = Order::where('status', 'pending')->get();
+
+        foreach ($orders as $order) {
+            $adminsRead = json_decode($order->admins_read, true);
+
+            if ( !$adminsRead || !in_array(Auth::id(), $adminsRead)) {
+                $num++;
+            }
+        }
+        return response()->json(['num' => $num]);
+    }
+
+
+
+    public function read_notifications()
+    {
+        $orders = Order::where('status', 'pending')->get();
+
+        foreach ($orders as $order) {
+            $adminsRead = json_decode($order->admins_read, true);
+
+            if (!$adminsRead || !in_array(Auth::id(), $adminsRead)) {
+                $adminsRead[] = Auth::id();
+                $order->admins_read = json_encode($adminsRead);
+                $order->save();
+            }
+        }
+
+        return response()->json(['message' => 'Notifications marked as read.']);
     }
 
 
