@@ -44,6 +44,7 @@ class ExpiredMedicine extends Command
                 $admins=User::where('role',"admin")->where('warehouse_id',$warehouse->id)->get();
                     foreach($admins as $admin)
                     {
+                        
                         $title = "Expired Medicine";
                         $body = "Medicine: " . $record->name . "\n"
                         . "Final Date: " . $record->pivot->final_date . "\n"
